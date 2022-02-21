@@ -28,7 +28,7 @@ def accuracy(output, target, topk=(1,)):
 
 def train(batch_size):
     model = resnet.resnet50(num_classes=2)
-    #model.cuda()
+    model.cuda()
     model.train()
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
@@ -48,8 +48,8 @@ def train(batch_size):
         for i, data in enumerate(train_dataloader):
             inputs, target = data
             inputs = inputs.clone().detach().float()
-            output= model(inputs)
-            #target = target.cuda()
+            output= model(inputs.cuda())
+            target = target.cuda()
             loss = criterion(output, target)
             prec1, = accuracy(output, target, topk=(1,))
             top1.update(prec1, inputs.size(0))
@@ -65,21 +65,22 @@ def train(batch_size):
 
 def test(batch_size):
     model = resnet.resnet50(num_classes=2)
-    # model.cuda()
+    model.cuda()
     model.eval()
-    model.load_state_dict(torch.load("resnet6.pth", map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load("resnet.pth"))
     train_dataloader = testdataloader.get_test_loader('data', batch_size)
     top1 = AverageMeter()
     for i, data in enumerate(train_dataloader):
         inputs, targets = data
         target = targets[0]
         inputs = inputs.clone().detach().float()
-        # target = target.cuda()
-        output = model(inputs)
+        target = target.cuda()
+        output = model(inputs.cuda())
         prec1, = accuracy(output, target, topk=(1,))
         top1.update(prec1, inputs.size(0))
     print('top1:acc_1:%.5f' % (top1.avg))
 
 
 if __name__ == '__main__':
+    train(16)
     test(16)
